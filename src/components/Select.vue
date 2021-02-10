@@ -1,20 +1,20 @@
 <template>
 	<div class="select" @click="selectHandler">
 		<span class="placeholder" v-if="!selectedOption || isOpen">Язык</span>
-		<span class="selectedValue" v-if="selectedOption && !isOpen">{{
-			selectedOption
-		}}</span>
-		<ul class="options">
+		<span class="selected-value" v-if="selectedOption && !isOpen">
+			{{ selectedOption }}
+		</span>
+		<ul class="options" v-show="isOpen">
 			<li
-				class="option"
 				v-for="item in items"
+				class="option"
 				:key="item.id"
+				:value="item"
+				:selected="selectedOption === item"
 				@click="
 					selectedOption = item
 					$emit('select', item)
 				"
-				:value="item"
-				:selected="selectedOption === item"
 			>
 				{{ item }}
 			</li>
@@ -24,7 +24,12 @@
 
 <script>
 export default {
-	props: ['options'],
+	props: {
+		options: {
+			type: Array,
+			required: true
+		}
+	},
 	data() {
 		return {
 			isOpen: false,
@@ -40,20 +45,20 @@ export default {
 		selectHandler() {
 			const self = this
 			const select = self.$el
-			const options = select.querySelector('.options')
-			const open = function () {
+			const open = function() {
+				self.isOpen = true
 				select.classList.add('open')
 				document.addEventListener('click', notSelectClickListener)
 			}
-			const close = function () {
+			const close = function() {
+				self.isOpen = false
 				select.classList.remove('open')
 				document.removeEventListener('click', notSelectClickListener)
 			}
-			const toggle = function () {
-				select.classList.contains('open') ? close() : open()
-				self.isOpen = !self.isOpen
+			const toggle = function() {
+				self.isOpen ? close() : open()
 			}
-			const notSelectClickListener = function (e) {
+			const notSelectClickListener = function(e) {
 				if (!select.contains(e.target)) {
 					close()
 				}
@@ -69,15 +74,24 @@ export default {
 	width: 100%;
 	line-height: 1;
 	position: relative;
+	display: flex;
+	align-items: center;
 	&::after {
 		content: '';
 		position: absolute;
 		width: 30px;
 		height: 30px;
-		background: url('i-arrow.svg') no-repeat center;
+		background: url('../assets/img/i-arrow.svg') no-repeat center;
 		top: 11px;
 		right: 11px;
 		transition: transform 0.35s ease;
+	}
+	.options {
+		list-style: none;
+		position: absolute;
+		bottom: 0;
+		transform: translateY(100%);
+		z-index: 1;
 	}
 }
 </style>

@@ -12,9 +12,11 @@
 				type="text"
 				placeholder="Введите Ваше имя"
 				v-model="name"
-				@input="validate('name')"
+				@input="validate('name', $event)"
 			/>
-			<span class="registration--input-invalid"
+			<span
+				class="registration--input-invalid"
+				v-show="inputIsDirty.name && !isValid.name"
 				>Может содержать только буквы, пробелы, дефис</span
 			>
 		</div>
@@ -25,9 +27,13 @@
 				type="mail"
 				placeholder="Введите ваш email"
 				v-model="email"
-				@input="validate('email')"
+				@input="validate('email', $event)"
 			/>
-			<span class="registration--input-invalid">Введите корректный email</span>
+			<span
+				class="registration--input-invalid"
+				v-show="inputIsDirty.email && !isValid.email"
+				>Введите корректный email</span
+			>
 		</div>
 		<div class="registration--tel">
 			<label for="registration--tel">Номер телефона</label>
@@ -36,12 +42,15 @@
 				type="text"
 				placeholder="Введите номер телефона"
 				v-model="tel"
-				@input="validate('tel')"
+				@input="validate('tel', $event)"
 			/>
-			<span class="registration--input-invalid"
+			<span
+				class="registration--input-invalid"
+				v-show="inputIsDirty.tel && !isValid.tel"
 				>Одиннадцать цифр. Возможен плюс, дефис, скобки</span
 			>
 		</div>
+
 		<label for="registration--lang">Язык</label>
 		<select-custom
 			class="registration--select"
@@ -65,21 +74,16 @@
 			class="registration--submit"
 			type="submit"
 			value="Зарегистрироваться"
-			:disabled="
-				!(
-					Object.values(this.isValid).reduce((sum, el) => (sum += el)) === 3 &&
-					lang &&
-					isConfirmed
-				)
-			"
+			:disabled="submitHandler"
 			@click.prevent
 		/>
 	</form>
 </template>
 
 <script>
-import Select from '@/components/Select'
+import Select from '@/components/Select.vue'
 export default {
+	name: 'SignUp',
 	components: {
 		'select-custom': Select
 	},
@@ -91,6 +95,11 @@ export default {
 			tel: '',
 			lang: '',
 			isConfirmed: false,
+			inputIsDirty: {
+				name: 0,
+				email: 0,
+				tel: 0
+			},
 			isValid: {
 				name: 0,
 				email: 0,
@@ -98,26 +107,32 @@ export default {
 			}
 		}
 	},
+	computed: {
+		submitHandler() {
+			return !(
+				Object.values(this.isValid).reduce((sum, el) => (sum += el)) === 3 &&
+				this.lang &&
+				this.isConfirmed
+			)
+		}
+	},
 	methods: {
 		// I ❤ Vuelidate...
-		validate(type) {
-			const elem = document.querySelector(`.registration--${type}`)
-			const input = elem.querySelector('input')
-			const invalidMessage = elem.querySelector('.registration--input-invalid')
-			const types = {
+		validate(type, $event) {
+			const input = $event.target
+			const typesRegExp = {
 				name: /^[A-Za-zА-Яа-я -]+$/,
 				email: /^([A-Za-zА-Яа-я0-9_\-\.])+\@([A-Za-zА-Яа-я0-9_\-\.])+\.([A-Za-zА-Яа-я]{2,6})$/,
 				tel: /^\+?\d{1}[-\(]?\d{3}[-\)]?\d{3}\-?\d{2}\-?\d{2}$/
 			}
-
-			invalidMessage.style.display = 'none'
 			this.isValid[type] = 0
+			this.inputIsDirty[type] = 1
 			if (input.value.length) {
-				if (!types[type].test(this[type])) {
-					invalidMessage.style.display = 'block'
-				} else {
-					this.isValid[type] = 1
-				}
+				!typesRegExp[type].test(this[type])
+					? (this.isValid[type] = 0)
+					: (this.isValid[type] = 1)
+			} else {
+				this.inputIsDirty[type] = 0
 			}
 		}
 	}
@@ -210,7 +225,7 @@ $color-black: #2c2738;
 					position: absolute;
 					width: 28px;
 					height: 28px;
-					background: url('i-checked.svg') no-repeat center;
+					background: url('../assets/img/i-checked.svg') no-repeat center;
 					top: -1px;
 					left: -1px;
 				}
@@ -241,54 +256,43 @@ $color-black: #2c2738;
 	}
 
 	&--input-invalid {
-		display: none;
 		color: $color-danger;
 		font-size: 14px;
 	}
 
 	&--select {
 		@extend input;
+		padding: 0 !important;
 		&.open {
 			border: 2px solid $color-primary;
-			&::after {
-				top: 10px;
-				right: 10px;
-				transform: rotate(180deg);
-			}
-			.placeholder {
-				color: $color-black;
-			}
 			.options {
-				display: block;
+				bottom: -6px;
+				left: -2px;
+				right: -2px;
+				background-color: white;
+				border: 1px solid $color-primary-lighter;
+				border-radius: 6px;
+				box-shadow: 0px 4px 8px rgba($color-black, 0.04),
+					0px 20px 20px rgba($color-black, 0.04);
+				.option {
+					height: 44px;
+					display: flex;
+					align-items: center;
+					color: $color-secondary;
+					cursor: pointer;
+					padding-left: 16px;
+					&:hover {
+						background-color: $color-light;
+					}
+				}
 			}
 		}
 		.placeholder {
 			color: $color-primary-light;
 		}
-		.options {
-			display: none;
-			position: absolute;
-			left: -2px;
-			right: -2px;
-			top: 50px;
-			background-color: white;
-			z-index: 1;
-			border: 1px solid $color-primary-lighter;
-			border-radius: 6px;
-			box-shadow: 0px 4px 8px rgba($color-black, 0.04),
-				0px 20px 20px rgba($color-black, 0.04);
-			list-style: none;
-			.option {
-				height: 44px;
-				display: flex;
-				align-items: center;
-				color: $color-secondary;
-				cursor: pointer;
-				padding-left: 16px;
-				&:hover {
-					background-color: $color-light;
-				}
-			}
+		.placeholder,
+		.selected-value {
+			margin-left: 16px;
 		}
 	}
 
