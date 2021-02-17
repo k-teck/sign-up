@@ -1,4 +1,4 @@
-# amigo-test-vue
+# registration-module
 
 макет https://www.figma.com/file/W03pATu7O2YIYhw0gq4nsH/Vue-JS?node-id=0%3A1  
 почта dglushkov@mail.ru  
